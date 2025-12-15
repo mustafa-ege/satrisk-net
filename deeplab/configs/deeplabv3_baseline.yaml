@@ -1,0 +1,38 @@
+run_name: deeplabv3_baseline
+seed: 42
+
+data:
+  dataset_root: "C:/content/cems_wildfire"
+  split_dirs:
+    train: "train/train"
+    val: "val/val"
+    test: "test/test"
+  image_suffix: "_S2L2A.tif"
+  mask_suffix: "_DEL.tif"
+  num_workers: 4
+  batch_size: 4
+  band_norm: "reflectance"  # reflectance/standard
+  target_size: [512, 512]
+  augmentations:
+    horizontal_flip: true
+    vertical_flip: true
+    random_rotate: true
+
+model:
+  type: "deeplabv3"  # Options: "unet", "deeplabv3"
+  in_channels: 12
+  num_classes: 1
+  backbone: "resnet50"  # Options: "resnet50", "resnet101"
+  pretrained: true
+  aux_loss: false
+
+training:
+  epochs: 25
+  learning_rate: 1e-4
+  weight_decay: 1e-4
+  grad_clip_norm: 1.0
+  amp: true
+
+metrics:
+  threshold: 0.5
+
