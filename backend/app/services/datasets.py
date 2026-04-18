@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, Field
+from pydantic import field_validator
 
 
 class DatasetRegion(BaseModel):
@@ -17,6 +18,13 @@ class DatasetRegion(BaseModel):
     )
     image_path: str
     mask_path: str
+
+    @field_validator("image_path", "mask_path", mode="before")
+    @classmethod
+    def _strip_data_prefix(cls, v: str) -> str:
+        if isinstance(v, str) and (v.startswith("data/") or v.startswith("data\\")):
+            return v.split("/", 1)[1] if "/" in v else v.split("\\", 1)[1]
+        return v
 
 
 class DatasetIndex(BaseModel):
