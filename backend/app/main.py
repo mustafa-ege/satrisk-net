@@ -1,5 +1,10 @@
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Repo root `.env` (this file: backend/app/main.py -> parents[2])
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 

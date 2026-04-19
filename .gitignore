@@ -1,3 +1,5 @@
 .DS_Store
 backend/.venv/
 *.md
+test/
+__pycache__/
