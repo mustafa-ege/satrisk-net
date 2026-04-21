@@ -18,6 +18,7 @@ export function DatasetMapPage() {
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
 
+  const [basemap, setBasemap] = useState<'streets' | 'satellite'>('streets')
   const [model, setModel] = useState<PredictModel>('unet')
   const [showGroundTruth, setShowGroundTruth] = useState(true)
   const [iou, setIou] = useState<number | null>(null)
@@ -149,6 +150,8 @@ export function DatasetMapPage() {
         predictionOverlayUrl={mapPredUrl}
         groundTruthOverlayUrl={mapGtUrl}
         showGroundTruthOverlay={showGroundTruth}
+        basemap={basemap}
+        onBasemapChange={setBasemap}
       />
     </div>
   )
