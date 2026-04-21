@@ -25,11 +25,74 @@ function mulberry32(seed: number) {
 
 const SIZE = 256
 
+async function tryBuildOverlayFromPng(
+  maskUrl: string,
+  kind: MaskKind,
+): Promise<string | null> {
+  let blob: Blob | null = null
+  let contentType = ''
+  try {
+    const res = await fetch(maskUrl)
+    if (!res.ok) return null
+    contentType = res.headers.get('content-type') ?? ''
+    blob = await res.blob()
+  } catch {
+    return null
+  }
+
+  const isPng =
+    contentType.includes('image/png') ||
+    maskUrl.toLowerCase().includes('.png')
+  if (!isPng || !blob) return null
+
+  let bmp: ImageBitmap
+  try {
+    bmp = await createImageBitmap(blob)
+  } catch {
+    return null
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = bmp.width
+  canvas.height = bmp.height
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return null
+
+  ctx.drawImage(bmp, 0, 0)
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const data = img.data
+
+  const base =
+    kind === 'prediction'
+      ? { r: 234, g: 88, b: 12 } // red/orange
+      : { r: 59, g: 130, b: 246 } // blue
+
+  // Turn the binary mask into a tinted RGBA overlay.
+  // We assume mask pixels are either black or white.
+  for (let i = 0; i < data.length; i += 4) {
+    const v = data[i] // red channel (grayscale so r=g=b)
+    if (v > 16) {
+      data[i] = base.r
+      data[i + 1] = base.g
+      data[i + 2] = base.b
+      data[i + 3] = kind === 'prediction' ? 170 : 150
+    } else {
+      data[i + 3] = 0
+    }
+  }
+
+  ctx.putImageData(img, 0, 0)
+  return canvas.toDataURL('image/png')
+}
+
 export async function buildRasterMaskDataUrl(
   maskUrl: string,
   kind: MaskKind,
   extraSeed: string,
 ): Promise<string> {
+  const overlay = await tryBuildOverlayFromPng(maskUrl, kind)
+  if (overlay) return overlay
+
   let textSeed = ''
   try {
     const res = await fetch(maskUrl)
