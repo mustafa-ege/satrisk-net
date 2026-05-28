@@ -115,7 +115,7 @@ export function DatasetMap({
           <ImageOverlay
             url={predictionOverlayUrl}
             bounds={maskBounds}
-            opacity={showGroundTruthOverlay ? 0.48 : 0.55}
+            opacity={showGroundTruthOverlay ? 0.52 : 0.72}
             interactive={false}
           />
         ) : null}
@@ -135,9 +135,9 @@ export function DatasetMap({
               positions={bboxToRectangleLatLngs(region.bbox)}
               pathOptions={{
                 color: selected ? '#0284c7' : '#64748b',
-                weight: selected ? 4 : 2,
+                weight:selected ? 3 : 2,
                 fillColor: selected ? '#0ea5e9' : '#94a3b8',
-                fillOpacity: selected ? 0.38 : 0.22,
+                fillOpacity: selected ? 0.22 : 0.22,
               }}
               eventHandlers={{
                 click: () => {

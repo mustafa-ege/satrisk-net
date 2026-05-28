@@ -1,16 +1,11 @@
 """
-Batch-run a saved DeepLab (or U-Net) checkpoint and write binary prediction GeoTIFFs.
+Batch-run a saved segmentation checkpoint and write binary prediction GeoTIFFs.
+
+This script is intentionally explicit: it does not assume defaults for paths. You
+must pass the dataset location, model config, checkpoint, and output directory.
 
 Predictions are stored under a separate output tree that mirrors paths relative to
 ``--dataset-root`` (e.g. ``<output-root>/test/EMSR207/AOI01/.../stem_PRED.tif``).
-
-Example::
-
-    cd model-experiments/deeplab
-    python export_predictions.py \\
-        --dataset-root ../../test \\
-        --split-dir . \\
-        --output-root ../../predictions/deeplab
 """
 
 from __future__ import annotations
@@ -42,14 +37,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--checkpoint",
         type=str,
-        default="artifacts/deeplabv3_baseline_best.pth",
-        help="Path to .pth with key 'model_state'.",
+        required=True,
+        help="Path to a .pth/.pt file (either a dict with 'model_state' or a raw state_dict).",
     )
     p.add_argument(
         "--config",
         type=str,
-        default="configs/deeplabv3_baseline.yaml",
-        help="Training YAML (model + data preprocessing).",
+        required=True,
+        help="YAML config that describes the model and data preprocessing.",
     )
     p.add_argument(
         "--dataset-root",
@@ -60,13 +55,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--split-dir",
         type=str,
-        default="test",
+        required=True,
         help="Subdirectory under dataset-root to scan for *_S2L2A.tif (use '.' if root is already the AOI).",
     )
     p.add_argument(
         "--output-root",
         type=str,
-        default="artifacts/predictions/deeplab",
+        required=True,
         help="Directory under which mirrored relative paths and *_PRED.tif files are written.",
     )
     p.add_argument(
@@ -89,6 +84,27 @@ def parse_args() -> argparse.Namespace:
 def load_config(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def extract_state_dict(ckpt_obj: object) -> dict:
+    """
+    Accept either:
+    - training checkpoint dict: {'model_state': state_dict, ...}
+    - raw state_dict: {'layer.weight': tensor, ...}
+    """
+    if (
+        isinstance(ckpt_obj, dict)
+        and "model_state" in ckpt_obj
+        and isinstance(ckpt_obj.get("model_state"), dict)
+    ):
+        return ckpt_obj["model_state"]  # type: ignore[return-value]
+
+    if isinstance(ckpt_obj, dict) and ckpt_obj and all(isinstance(k, str) for k in ckpt_obj.keys()):
+        return ckpt_obj  # type: ignore[return-value]
+
+    raise TypeError(
+        "Unsupported checkpoint format. Expected a dict with key 'model_state' or a raw state_dict dict."
+    )
 
 
 def output_raster_path(
@@ -136,8 +152,8 @@ def write_pred_geotiff(
 
 def main() -> None:
     args = parse_args()
-    cfg_path = (PROJECT_ROOT / args.config).resolve()
-    ckpt_path = (PROJECT_ROOT / args.checkpoint).resolve()
+    cfg_path = Path(args.config).expanduser().resolve()
+    ckpt_path = Path(args.checkpoint).expanduser().resolve()
     dataset_root = Path(args.dataset_root).resolve()
     output_root = Path(args.output_root).resolve()
 
@@ -185,9 +201,14 @@ def main() -> None:
     load_kw: dict = {"map_location": device}
     if "weights_only" in inspect.signature(torch.load).parameters:
         load_kw["weights_only"] = False
-    ckpt = torch.load(ckpt_path, **load_kw)
+    ckpt_obj = torch.load(ckpt_path, **load_kw)
+    state_dict = extract_state_dict(ckpt_obj)
     model = create_model(model_cfg).to(device)
-    model.load_state_dict(ckpt["model_state"])
+    missing, unexpected = model.load_state_dict(state_dict, strict=False)
+    if missing:
+        print(f"[export] warning: missing keys: {len(missing)}", flush=True)
+    if unexpected:
+        print(f"[export] warning: unexpected keys: {len(unexpected)}", flush=True)
     model.eval()
 
     n_written = 0

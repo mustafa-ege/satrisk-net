@@ -64,7 +64,7 @@ async function tryBuildOverlayFromPng(
 
   const base =
     kind === 'prediction'
-      ? { r: 234, g: 88, b: 12 } // red/orange
+      ? { r: 210, g: 18, b: 18 } // strong fire red
       : { r: 59, g: 130, b: 246 } // blue
 
   // Turn the binary mask into a tinted RGBA overlay.
@@ -75,7 +75,7 @@ async function tryBuildOverlayFromPng(
       data[i] = base.r
       data[i + 1] = base.g
       data[i + 2] = base.b
-      data[i + 3] = kind === 'prediction' ? 170 : 150
+      data[i + 3] = kind === 'prediction' ? 235 : 150
     } else {
       data[i + 3] = 0
     }
@@ -116,14 +116,17 @@ export async function buildRasterMaskDataUrl(
 
   const base =
     kind === 'prediction'
-      ? { r: 234, g: 88, b: 12 }
+      ? { r: 210, g: 18, b: 18 }
       : { r: 59, g: 130, b: 246 }
 
-  ctx.fillStyle = `rgba(${base.r}, ${base.g}, ${base.b}, 0.28)`
+  ctx.fillStyle =
+    kind === 'prediction'
+      ? `rgba(${base.r}, ${base.g}, ${base.b}, 0.52)`
+      : `rgba(${base.r}, ${base.g}, ${base.b}, 0.28)`
   ctx.fillRect(0, 0, SIZE, SIZE)
 
   const stripes = kind === 'prediction' ? 14 : 18
-  ctx.globalAlpha = 0.22
+  ctx.globalAlpha = kind === 'prediction' ? 0.38 : 0.22
   for (let i = 0; i < stripes; i++) {
     const offset = (i / stripes) * (SIZE + 40) - 20 + rng() * 8
     ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.25)'

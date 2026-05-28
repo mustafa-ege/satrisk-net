@@ -4,7 +4,7 @@
   right: 0;
   bottom: 0;
   z-index: 1000;
-  width: min(420px, 38vw);
+  width: min(520px, 46vw);
   max-width: calc(100vw - 16px);
   padding: 14px 16px;
   border-radius: 0;
@@ -120,10 +120,18 @@
   gap: 12px;
 }
 
+.maskPairRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
 .previewSection {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .previewLabel {

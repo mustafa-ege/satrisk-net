@@ -104,27 +104,36 @@ export function PredictionPanel({
           </div>
         </section>
 
-        <section className={styles.previewSection}>
-          <div className={styles.previewLabel}>Ground truth</div>
-          <div className={styles.imageFrame}>
-            {groundTruthMaskUrl ? (
-              <img className={styles.singleImage} src={groundTruthMaskUrl} alt="" />
-            ) : (
-              <div className={styles.placeholder}>—</div>
-            )}
-          </div>
-        </section>
-
-        <section className={styles.previewSection}>
-          <div className={styles.previewLabel}>Prediction</div>
-          <div className={styles.imageFrame}>
-            {predictionMaskUrl ? (
-              <img className={styles.singleImage} src={predictionMaskUrl} alt="" />
-            ) : (
-              <div className={styles.placeholder}>—</div>
-            )}
-          </div>
-        </section>
+        <div className={styles.maskPairRow}>
+          <section className={styles.previewSection}>
+            <div className={styles.previewLabel}>Prediction</div>
+            <div className={styles.imageFrame}>
+              {predictionMaskUrl ? (
+                <img
+                  className={styles.singleImage}
+                  src={predictionMaskUrl}
+                  alt=""
+                />
+              ) : (
+                <div className={styles.placeholder}>—</div>
+              )}
+            </div>
+          </section>
+          <section className={styles.previewSection}>
+            <div className={styles.previewLabel}>Ground truth</div>
+            <div className={styles.imageFrame}>
+              {groundTruthMaskUrl ? (
+                <img
+                  className={styles.singleImage}
+                  src={groundTruthMaskUrl}
+                  alt=""
+                />
+              ) : (
+                <div className={styles.placeholder}>—</div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </aside>
   )
