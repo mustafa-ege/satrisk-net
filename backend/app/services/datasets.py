@@ -35,8 +35,7 @@ class DatasetIndex(BaseModel):
 
 
 def _default_index_path() -> Path:
-    # backend/app/services/datasets.py -> backend/app/data/datasets.mock.json
-    return Path(__file__).resolve().parents[1] / "data" / "datasets.mock.json"
+    return Path(__file__).resolve().parents[1] / "data"
 
 
 def _dataset_root_from_env() -> Path | None:
@@ -72,37 +71,32 @@ def _regions_from_filesystem(root: Path) -> list[DatasetRegion]:
 
 
 @lru_cache(maxsize=16)
-def _load_dataset_index_cached(mock_index_resolved: str, dataset_root_resolved: str) -> DatasetIndex:
+def _load_dataset_index_cached(dataset_root_resolved: str) -> DatasetIndex:
     if dataset_root_resolved:
         root = Path(dataset_root_resolved)
         if root.is_dir():
             return DatasetIndex(regions=_regions_from_filesystem(root))
-
-    index_path = Path(mock_index_resolved)
-    raw = json.loads(index_path.read_text(encoding="utf-8"))
-    regions = [DatasetRegion.model_validate(item) for item in raw]
-    return DatasetIndex(regions=regions)
+    return DatasetIndex(regions=[])
 
 
-def load_dataset_index(path: str | Path | None = None) -> DatasetIndex:
+def load_dataset_index() -> DatasetIndex:
     """
-    Load regions from ``SATRISK_DATASET_ROOT`` when that directory exists; otherwise
-    load the JSON mock index (or the explicit ``path`` for the mock file).
+    Load regions from ``SATRISK_DATASET_ROOT`` when that directory exists.
     """
-    mock_path = Path(path) if path is not None else _default_index_path()
     root = _dataset_root_from_env()
     dataset_root_key = str(root.resolve()) if root is not None else ""
-    return _load_dataset_index_cached(str(mock_path.resolve()), dataset_root_key)
+    return _load_dataset_index_cached(dataset_root_key)
 
 
-def list_regions(*, index_path: str | Path | None = None) -> list[DatasetRegion]:
-    return load_dataset_index(index_path).regions
+def list_regions() -> list[DatasetRegion]:
+    return load_dataset_index().regions
 
 
-def get_region(region_id: str, *, index_path: str | Path | None = None) -> DatasetRegion | None:
-    regions = load_dataset_index(index_path).regions
+def get_region(region_id: str) -> DatasetRegion | None:
+    regions = load_dataset_index().regions
     for region in regions:
         if region.id == region_id:
             return region
     return None
+
 

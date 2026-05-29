@@ -1,2 +1,0 @@
-mock ground truth mask placeholder: cems_wildfire_0003
-

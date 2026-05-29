@@ -1,2 +1,0 @@
-mock prediction mask placeholder: model=unet region=cems_wildfire_0003
-
