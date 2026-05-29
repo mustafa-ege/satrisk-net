@@ -8,9 +8,27 @@ export type DatasetRegionSummary = {
 const DATASETS_URL = '/api/datasets'
 
 export async function fetchDatasetRegions(): Promise<DatasetRegionSummary[]> {
-  const res = await fetch(DATASETS_URL)
-  if (!res.ok) {
-    throw new Error(`Failed to load datasets (${res.status})`)
+  const isStatic = import.meta.env.VITE_STATIC_MODE === 'true'
+  if (isStatic) {
+    const res = await fetch('/data/regions.json')
+    if (!res.ok) {
+      throw new Error(`Failed to load static regions (${res.status})`)
+    }
+    return res.json() as Promise<DatasetRegionSummary[]>
   }
-  return res.json() as Promise<DatasetRegionSummary[]>
+
+  try {
+    const res = await fetch(DATASETS_URL)
+    if (!res.ok) {
+      throw new Error(`Failed to load datasets (${res.status})`)
+    }
+    return await res.json() as DatasetRegionSummary[]
+  } catch (err) {
+    console.warn('Backend connection failed, falling back to static dataset regions...', err)
+    const res = await fetch('/data/regions.json')
+    if (!res.ok) {
+      throw new Error(`Failed to load fallback static regions (${res.status})`)
+    }
+    return res.json() as Promise<DatasetRegionSummary[]>
+  }
 }
